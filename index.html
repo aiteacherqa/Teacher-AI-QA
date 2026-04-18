@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="fil">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Teacher — Florante at Laura</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold:        #c9a84c;
+      --gold-light:  #e8c97a;
+      --gold-dim:    #7a5f28;
+      --crimson:     #8b1a2a;
+      --crimson-dim: #4a0e16;
+      --ink:         #0e0b07;
+      --parchment:   #f5ecd4;
+      --parch-dim:   #d6c49a;
+      --parch-dark:  #c4a96e;
+      --panel:       #1a1108;
+      --panel2:      #221808;
+      --panel3:      #2e2010;
+      --border:      rgba(201,168,76,0.25);
+      --border2:     rgba(201,168,76,0.5);
+      --shadow:      0 4px 32px rgba(0,0,0,0.6);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'EB Garamond', Georgia, serif;
+      background: var(--ink);
+      color: var(--parchment);
+      height: 100vh; overflow: hidden;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(139,26,42,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(201,168,76,0.06) 0%, transparent 50%);
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--panel); }
+    ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 4px; }
+
+    .app { display: flex; width: 100vw; height: 100vh; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 230px; flex-shrink: 0;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: relative; overflow: hidden;
+    }
+    .sidebar::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(201,168,76,0.03) 28px, rgba(201,168,76,0.03) 29px);
+      pointer-events: none;
+    }
+    .sidebar-header { padding: 18px 16px 14px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo { font-family: 'Cinzel Decorative', serif; font-size: 10px; color: var(--gold); letter-spacing: 0.1em; line-height: 1.5; }
+    .sidebar-sub { font-family: 'EB Garamond', serif; font-style: italic; font-size: 11px; color: var(--gold-dim); margin-top: 2px; }
+    .sidebar-title { font-family: 'Cinzel', serif; font-size: 9px; font-weight: 600; color: var(--gold-dim); text-transform: uppercase; letter-spacing: 0.14em; padding: 12px 16px 8px; }
+    .history-box { flex: 1; overflow-y: auto; padding: 0 10px 10px; display: flex; flex-direction: column; gap: 6px; }
+    .history-item { font-size: 12px; font-family: 'EB Garamond', serif; color: var(--parch-dim); padding: 7px 10px; border-radius: 6px; background: rgba(201,168,76,0.04); border: 1px solid var(--border); transition: border-color 0.2s; }
+    .history-item:hover { border-color: var(--border2); }
+    .history-item span { display: block; font-family: 'Cinzel', serif; font-size: 9px; font-weight: 600; color: var(--gold-dim); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2px; }
+
+    /* MAIN */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--panel2); }
+
+    /* TOPBAR */
+    .topbar {
+      padding: 10px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 14px;
+      background: var(--panel); position: relative; overflow: hidden;
+    }
+    .topbar::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+    .ai-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--gold-dim); display: flex; align-items: center; justify-content: center; font-size: 20px; background: var(--panel3); flex-shrink: 0; box-shadow: 0 0 12px rgba(201,168,76,0.2); }
+    .ai-name { font-family: 'Cinzel', serif; font-size: 15px; font-weight: 600; color: var(--gold-light); letter-spacing: 0.04em; }
+    .ai-sub { font-family: 'EB Garamond', serif; font-style: italic; font-size: 12px; color: #5a9e6f; display: flex; align-items: center; gap: 5px; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #5a9e6f; }
+    .topbar-right { margin-left: auto; display: flex; gap: 8px; }
+    .admin-btn { width: 36px; height: 36px; border-radius: 8px; background: transparent; border: 1px solid var(--border2); color: var(--gold); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .admin-btn:hover { background: rgba(201,168,76,0.12); border-color: var(--gold); }
+
+    /* HERO BANNER */
+    .hero-banner {
+      padding: 10px 20px; background: var(--panel); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 16px;
+      position: relative; overflow: hidden;
+    }
+    .hero-banner::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(139,26,42,0.12) 0%, transparent 60%); pointer-events: none; }
+    .hero-text { flex: 1; position: relative; }
+    .hero-title { font-family: 'Cinzel Decorative', serif; font-size: 18px; font-weight: 700; color: var(--gold-light); letter-spacing: 0.06em; text-shadow: 0 0 20px rgba(201,168,76,0.4); line-height: 1.2; }
+    .hero-subtitle { font-family: 'EB Garamond', serif; font-style: italic; font-size: 13px; color: var(--parch-dim); margin-top: 3px; }
+    .hero-divider { width: 1px; height: 40px; background: linear-gradient(to bottom, transparent, var(--gold-dim), transparent); }
+    .hero-author { font-family: 'Cinzel', serif; font-size: 10px; color: var(--gold-dim); text-align: right; letter-spacing: 0.08em; line-height: 1.6; }
+    .hero-author strong { display: block; font-size: 12px; color: var(--gold); }
+
+    /* VIDEO BOX */
+    .video-area { padding: 10px 20px 0; }
+    .video-box { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; height: 130px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; transition: box-shadow 0.3s, border-color 0.3s; }
+    .video-box.playing { box-shadow: 0 0 25px rgba(201,168,76,0.25); border-color: var(--gold-dim); }
+    .idle-display { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .idle-display.hidden { display: none; }
+    .avatar-circle { width: 56px; height: 56px; border-radius: 50%; background: var(--panel3); border: 2px solid var(--gold-dim); display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 0 16px rgba(201,168,76,0.12); }
+    .idle-label { font-family: 'EB Garamond', serif; font-style: italic; font-size: 13px; color: var(--gold-dim); }
+    .wave-display { display: none; flex-direction: column; align-items: center; gap: 8px; width: 100%; padding: 0 24px; }
+    .wave-display.active { display: flex; }
+    .wave-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--panel3); border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 26px; animation: avatarPulse 1.5s ease-in-out infinite; }
+    @keyframes avatarPulse { 0%,100%{box-shadow:0 0 10px rgba(201,168,76,0.3)} 50%{box-shadow:0 0 28px rgba(201,168,76,0.7)} }
+    .wave-bars { display: flex; align-items: center; gap: 3px; height: 40px; }
+    .wave-bar { width: 4px; border-radius: 2px; background: linear-gradient(to top, var(--crimson), var(--gold)); animation: waveBounce 0.8s ease-in-out infinite; transform-origin: bottom; }
+    .wave-bar:nth-child(1){animation-delay:0.00s}.wave-bar:nth-child(2){animation-delay:0.10s}.wave-bar:nth-child(3){animation-delay:0.20s}.wave-bar:nth-child(4){animation-delay:0.30s}.wave-bar:nth-child(5){animation-delay:0.15s}.wave-bar:nth-child(6){animation-delay:0.05s}.wave-bar:nth-child(7){animation-delay:0.25s}.wave-bar:nth-child(8){animation-delay:0.35s}.wave-bar:nth-child(9){animation-delay:0.10s}.wave-bar:nth-child(10){animation-delay:0.20s}.wave-bar:nth-child(11){animation-delay:0.30s}.wave-bar:nth-child(12){animation-delay:0.00s}.wave-bar:nth-child(13){animation-delay:0.15s}.wave-bar:nth-child(14){animation-delay:0.25s}.wave-bar:nth-child(15){animation-delay:0.05s}.wave-bar:nth-child(16){animation-delay:0.35s}.wave-bar:nth-child(17){animation-delay:0.10s}.wave-bar:nth-child(18){animation-delay:0.20s}.wave-bar:nth-child(19){animation-delay:0.30s}.wave-bar:nth-child(20){animation-delay:0.00s}
+    @keyframes waveBounce { 0%,100%{height:6px;opacity:0.3} 50%{height:36px;opacity:1} }
+    .wave-label { font-family: 'EB Garamond', serif; font-style: italic; font-size: 12px; color: var(--gold); letter-spacing: 0.06em; animation: fadeLabel 1s ease-in-out infinite alternate; }
+    @keyframes fadeLabel { from{opacity:0.4} to{opacity:1} }
+    .video-box video#speakerVideo { display: none; }
+
+    /* CHAT VIDEO */
+    .chat-video-wrap { margin-top: 10px; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid var(--gold-dim); width: 100%; box-shadow: 0 0 20px rgba(201,168,76,0.15); }
+    .chat-video-wrap video { width: 100%; height: 300px; object-fit: contain; display: block; }
+
+    .quick-btns { display: none; }
+
+    /* CHAT */
+    .chat-area { flex: 1; overflow-y: auto; padding: 14px 20px; display: flex; flex-direction: column; gap: 12px; }
+    .msg { display: flex; }
+    .msg.user { justify-content: flex-end; }
+    .msg.ai   { justify-content: flex-start; }
+    .bubble { max-width: 72%; padding: 10px 16px; border-radius: 14px; font-family: 'EB Garamond', serif; font-size: 16px; line-height: 1.6; animation: fadeUp 0.3s ease; }
+    .bubble.has-video { max-width: 560px; width: 560px; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+    .msg.user .bubble { background: linear-gradient(135deg, var(--crimson-dim), var(--crimson)); color: var(--parchment); border: 1px solid rgba(139,26,42,0.6); border-bottom-right-radius: 4px; box-shadow: 0 2px 12px rgba(139,26,42,0.3); }
+    .msg.ai   .bubble { background: var(--panel3); color: var(--parch-dim); border: 1px solid var(--border); border-bottom-left-radius: 4px; display: flex; flex-direction: column; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+    .typing-dots { display: flex; gap: 5px; align-items: center; padding: 4px 0; }
+    .typing-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--gold-dim); animation: blink 1.2s infinite; }
+    .typing-dots span:nth-child(2){animation-delay:0.2s} .typing-dots span:nth-child(3){animation-delay:0.4s}
+    @keyframes blink { 0%,80%,100%{opacity:0.3} 40%{opacity:1} }
+    .ornament { text-align: center; font-size: 14px; color: var(--gold-dim); letter-spacing: 0.3em; margin: 2px 0; opacity: 0.5; }
+
+    /* INPUT */
+    .input-row { padding: 10px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; background: var(--panel); position: relative; }
+    .input-row::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dim), transparent); }
+    .input-row input { flex: 1; padding: 11px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel2); color: var(--parchment); font-family: 'EB Garamond', serif; font-size: 16px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+    .input-row input::placeholder { color: var(--gold-dim); font-style: italic; }
+    .input-row input:focus { border-color: var(--gold-dim); box-shadow: 0 0 12px rgba(201,168,76,0.12); }
+    .send-btn { padding: 11px 24px; background: linear-gradient(135deg, var(--crimson-dim), var(--crimson)); color: var(--parchment); border: 1px solid rgba(139,26,42,0.5); border-radius: 10px; font-family: 'Cinzel', serif; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 10px rgba(139,26,42,0.3); }
+    .send-btn:hover { filter: brightness(1.2); box-shadow: 0 4px 18px rgba(139,26,42,0.5); }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); color: var(--parchment); font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.06em; padding: 10px 22px; border-radius: 20px; z-index: 2000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+    .toast.green { background: #1a3d23; border: 1px solid #3a7a4a; }
+    .toast.red   { background: var(--crimson-dim); border: 1px solid var(--crimson); }
+
+    /* ADMIN MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--panel); border: 1px solid var(--border2); border-radius: 16px; width: 540px; max-width: 95vw; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; animation: modalIn 0.2s ease; box-shadow: var(--shadow); }
+    @keyframes modalIn { from{opacity:0;transform:scale(0.95) translateY(-10px)} to{opacity:1;transform:scale(1) translateY(0)} }
+    .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .modal-header h2 { font-family: 'Cinzel', serif; font-size: 15px; color: var(--gold-light); }
+    .modal-header p  { font-family: 'EB Garamond', serif; font-style: italic; font-size: 12px; color: var(--gold-dim); margin-top: 3px; }
+    .modal-close { width: 28px; height: 28px; border-radius: 6px; background: transparent; border: 1px solid var(--border); color: var(--gold-dim); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .modal-close:hover { background: var(--crimson); color: white; border-color: var(--crimson); }
+    .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+    .add-form { background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 18px; }
+    .add-form h3 { font-family: 'Cinzel', serif; font-size: 12px; color: var(--gold); margin-bottom: 12px; letter-spacing: 0.06em; }
+    .form-row { margin-bottom: 10px; }
+    .form-row label { display: block; font-family: 'Cinzel', serif; font-size: 10px; font-weight: 600; color: var(--gold-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+    .form-row input { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--parchment); font-family: 'EB Garamond', serif; font-size: 14px; outline: none; }
+    .form-row input:focus { border-color: var(--gold-dim); }
+    .form-row input::placeholder { color: var(--gold-dim); font-style: italic; }
+    .form-hint { font-family: 'EB Garamond', serif; font-style: italic; font-size: 11px; color: var(--gold-dim); margin-top: 3px; }
+    .add-qa-btn { width: 100%; padding: 10px; background: linear-gradient(135deg, var(--crimson-dim), var(--crimson)); color: var(--parchment); border: none; border-radius: 7px; font-family: 'Cinzel', serif; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; transition: 0.2s; margin-top: 4px; }
+    .add-qa-btn:hover { filter: brightness(1.15); }
+    .qa-list-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .qa-list-title { font-family: 'Cinzel', serif; font-size: 10px; font-weight: 600; color: var(--gold-dim); text-transform: uppercase; letter-spacing: 0.1em; }
+    .qa-count { font-size: 11px; background: var(--crimson-dim); color: var(--parch-dim); border: 1px solid var(--crimson); padding: 2px 8px; border-radius: 10px; font-family: 'Cinzel', serif; }
+    .qa-item { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; margin-bottom: 7px; display: flex; align-items: flex-start; gap: 10px; transition: border-color 0.2s; }
+    .qa-item:hover { border-color: var(--border2); }
+    .qa-item-num { font-family: 'Cinzel', serif; font-size: 10px; font-weight: 700; color: var(--gold-dim); min-width: 18px; padding-top: 1px; }
+    .qa-item-text { flex: 1; min-width: 0; }
+    .qa-item-q { font-family: 'Cinzel', serif; font-size: 12px; color: var(--gold); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .qa-item-a { font-family: 'EB Garamond', serif; font-size: 12px; color: var(--parch-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .qa-item-files { font-size: 11px; color: var(--gold-dim); margin-top: 3px; font-style: italic; }
+    .delete-btn { flex-shrink: 0; width: 24px; height: 24px; border-radius: 5px; background: transparent; border: 1px solid var(--border); color: var(--gold-dim); font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .delete-btn:hover { background: var(--crimson); color: white; border-color: var(--crimson); }
+    .empty-msg { font-family: 'EB Garamond', serif; font-style: italic; font-size: 13px; color: var(--gold-dim); text-align: center; padding: 24px 0; }
+
+    /* QUIZ MODAL */
+    .quiz-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1100; align-items: center; justify-content: center; padding: 18px; }
+    .quiz-overlay.open { display: flex; }
+    .quiz-panel { width: min(860px,100%); max-width: 95vw; background: var(--panel); border: 1px solid var(--border2); border-radius: 20px; padding: 30px; box-shadow: 0 28px 80px rgba(0,0,0,0.7); }
+    .quiz-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .quiz-header h2 { font-family: 'Cinzel Decorative', serif; font-size: 20px; color: var(--gold-light); }
+    .quiz-header .quiz-close { width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 10px; background: transparent; color: var(--gold-dim); font-size: 18px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .quiz-header .quiz-close:hover { background: var(--crimson); color: white; border-color: var(--crimson); }
+    .quiz-intro, .quiz-content, .quiz-complete { color: var(--parch-dim); line-height: 1.9; }
+    .quiz-block { margin-top: 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--panel2); padding: 20px; }
+    .quiz-block .quiz-label { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+    .quiz-block .quiz-text { font-family: 'EB Garamond', serif; font-size: 16px; color: var(--parch-dim); line-height: 1.9; }
+    .quiz-footer { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+    .quiz-action, .quiz-answer { width: 100%; padding: 14px 18px; border-radius: 12px; border: 1px solid var(--border); background: var(--panel3); color: var(--parchment); cursor: pointer; transition: 0.2s; text-align: left; font-family: 'EB Garamond', serif; font-size: 16px; line-height: 1.6; }
+    .quiz-action:hover, .quiz-answer:hover { background: var(--crimson-dim); border-color: var(--crimson); }
+    .quiz-answer.correct { border-color: #3a7a4a; background: #112318; }
+    .quiz-answer.wrong   { border-color: var(--crimson); background: var(--crimson-dim); }
+    .quiz-status { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 16px; align-items: center; }
+    .quiz-status span { font-family: 'EB Garamond', serif; font-size: 15px; color: var(--parch-dim); }
+    @media (max-width: 700px) { .quiz-panel { padding: 20px; } .quiz-header h2 { font-size: 16px; } }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">Florante at Laura</div>
+      <div class="sidebar-sub">ni Francisco Balagtas</div>
+    </div>
+    <div class="sidebar-title">Kasaysayan ng Usapan</div>
+    <div class="history-box" id="historyBox"></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="ai-avatar">📜</div>
+      <div>
+        <div class="ai-name">Guro ng AI</div>
+        <div class="ai-sub"><div class="status-dot"></div> Handa</div>
+      </div>
+      <div class="topbar-right">
+        <button class="admin-btn" onclick="openQuiz()" title="Kumuha ng Quiz">📚</button>
+      </div>
+    </div>
+
+    <div class="hero-banner">
+      <div class="hero-text">
+        <div class="hero-title">Florante at Laura</div>
+        <div class="hero-subtitle">Isang Obra Maestra ng Panitikang Tagalog</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-author">
+        May-akda
+        <strong>Francisco Balagtas</strong>
+        (1788 – 1862)
+      </div>
+    </div>
+
+    <div class="video-area">
+      <div class="video-box" id="videoBox">
+        <div class="idle-display" id="idleDisplay">
+          <div class="avatar-circle">📜</div>
+          <div class="idle-label">Naghihintay ng inyong tanong…</div>
+        </div>
+        <div class="wave-display" id="waveDisplay">
+          <div class="wave-avatar">📜</div>
+          <div class="wave-bars">
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+          </div>
+          <div class="wave-label">Nagsasalita ang Guro…</div>
+        </div>
+        <video id="speakerVideo" playsinline muted></video>
+      </div>
+    </div>
+
+    <div class="quick-btns" id="quickBtns"></div>
+
+    <div class="chat-area" id="chatBox">
+      <div class="ornament">✦ ── ✦ ── ✦</div>
+      <div class="msg ai">
+        <div class="bubble">Maligayang pagdating! Ako ang inyong AI Guro para sa <em>Florante at Laura</em>. Itanong ang anumang nais ninyong malaman tungkol sa dakilang akdang ito ni Francisco Balagtas.</div>
+      </div>
+    </div>
+
+    <div class="input-row">
+      <input type="text" id="userInput" placeholder="Itanong ang inyong nais malaman…" />
+      <button class="send-btn" onclick="sendMessage()">Ipadala</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN MODAL -->
+<div class="modal-overlay" id="adminModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div><h2>📚 Pamahalaan ang Q&amp;A</h2><p>Magdagdag o mag-alis ng tanong at sagot</p></div>
+      <button class="modal-close" onclick="closeAdmin()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="add-form">
+        <h3>➕ Bagong Q&amp;A</h3>
+        <div class="form-row"><label>Tanong (Keyword)</label><input type="text" id="inQ" placeholder="hal. kumusta ka" /><div class="form-hint">Ang salitang hahanapin kapag nag-type ang estudyante</div></div>
+        <div class="form-row"><label>Sagot</label><input type="text" id="inA" placeholder="hal. Ako ay maayos, salamat!" /></div>
+        <div class="form-row"><label>Video file</label><input type="text" id="inV" placeholder="hal. mantalking.mp4" /><div class="form-hint">Pangalan ng video file sa parehong folder</div></div>
+        <div class="form-row"><label>Audio / Voice file</label><input type="text" id="inAudio" placeholder="hal. kumusta-ka.mp3" /></div>
+        <button class="add-qa-btn" onclick="addQA()">✔ I-save ang Q&amp;A</button>
+      </div>
+      <div class="qa-list-header"><div class="qa-list-title">Kasalukuyang Q&amp;A</div><div class="qa-count" id="qaCount">0</div></div>
+      <div id="qaList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ MODAL -->
+<div class="quiz-overlay" id="quizModal">
+  <div class="quiz-panel" role="dialog" aria-modal="true" aria-labelledby="quizTitle">
+    <div class="quiz-header">
+      <div><h2 id="quizTitle">Introduksyon</h2><div class="quiz-status"><span id="quizProgress">1 / 15</span><span id="quizScore">Score: 0</span></div></div>
+      <button class="quiz-close" onclick="closeQuiz()">✕</button>
+    </div>
+    <div class="quiz-intro" id="quizIntro">
+      <div class="quiz-block"><div class="quiz-label">INTRODUKSYON</div><div class="quiz-text">Magandang buhay! Ako si Ginoong Eyai. At ngayong araw, susubukin natin ang inyong kaalaman patungkol sa Obra Maestra na Florante at Laura. Manatiling nakatutok at makinig nang mabuti upang mas lalo pang lumawak ang inyong kaalaman.</div></div>
+      <div class="quiz-footer"><button class="quiz-action" onclick="showQuizPanuto()">SUSUNOD</button></div>
+    </div>
+    <div class="quiz-intro" id="quizPanutoScreen" style="display:none;">
+      <div class="quiz-block"><div class="quiz-label">PANUTO</div><div class="quiz-text">Tukuyin kung ano o saan ang ipinahahayag ng bawat saknong. Piliin ang wastong sagot sa letrang A-D.</div></div>
+      <div class="quiz-footer"><button class="quiz-action" onclick="showQuizMechanics()">SUSUNOD</button></div>
+    </div>
+    <div class="quiz-intro" id="quizMechanics" style="display:none;">
+      <div class="quiz-block"><div class="quiz-label">MEKANIKS</div><div class="quiz-text">Narito ang mekaniks, magpapakinig at magpapanood si Ginoong Eyai. Maghanda, dahil tunay na susukatin ng mga katanungan ko ang iyong kaalaman. Ang mga katanungan ay nahahati sa iba't ibang bahagi: ang MADALI, KATAMTAMAN, at MAHIRAP.</div></div>
+      <div class="quiz-footer"><button class="quiz-action" onclick="startQuiz()">Simulan ang Quiz</button></div>
+    </div>
+    <div class="quiz-content" id="quizContent" style="display:none;">
+      <div class="quiz-block"><div class="quiz-label" id="quizQuestionLabel">Tanong</div><div class="quiz-text" id="quizQuestion">Loading...</div><audio id="quizQuestionAudio" preload="auto" style="display:none;"></audio><audio id="quizFeedbackAudio" preload="auto" style="display:none;"></audio></div>
+      <div id="quizAnswers"></div>
+      <div class="quiz-status"><span>Oras: <strong id="quizTimer">10</strong>s</span><span id="quizFeedback"></span></div>
+      <div class="quiz-footer" id="quizFooter" style="display:none;"><button class="quiz-action" onclick="proceedToNextQuestion()">Susunod</button></div>
+    </div>
+    <div class="quiz-intro" id="quizLevel2Intro" style="display:none;">
+      <div class="quiz-block"><div class="quiz-label"></div><div class="quiz-text">Kung nakuha mo sa unang bahagi ang lahat ng tamang sagot, mahusay! Pero kung hindi, ayos lang 'yon. Dahil ngayon, magsisimula na ang ikalawang bahagi.</div></div>
+      <div class="quiz-footer"><button class="quiz-action" onclick="beginLevel2Questions()">Simulan ang Antas 2</button></div>
+    </div>
+    <div class="quiz-intro" id="quizLevel3Intro" style="display:none;">
+      <div class="quiz-block"><div class="quiz-label"></div><div class="quiz-text">Maligayang pagdating sa huling bahagi ng ating gawain! Kaya ngayon, susubukin natin ang inyong kaalaman pagdating sa inyong bokabularyo.</div></div>
+      <div class="quiz-footer"><button class="quiz-action" onclick="beginLevel3Questions()">Simulan ang Antas 3</button></div>
+    </div>
+    <div class="quiz-complete" id="quizOutroScreen" style="display:none;">
+      <div class="quiz-block"><div class="quiz-label"></div><div class="quiz-text">Binabati kita, sapagkat natapos mo ang bawat bahagi ng gawain! Hanggang sa muli, paalam!</div></div>
+      <div class="quiz-footer"><button class="quiz-action" onclick="showComplete()">Susunod</button></div>
+    </div>
+    <div class="quiz-complete" id="quizComplete" style="display:none;">
+      <div class="quiz-block"><div class="quiz-label"></div><div class="quiz-text" id="quizResult">Magaling! Nakumpleto mo na ang quiz.</div></div>
+      <div class="quiz-footer"><button class="quiz-action" onclick="showQuizIntro()">Ulitin</button></div>
+    </div>
+  </div>
+</div>
+
+<video id="hiddenVoice" style="display:none;" playsinline></video>
+<audio id="introAudio"       src="INTRODUKSYON.mp3" preload="auto"></audio>
+<audio id="mechanicsAudio"   src="MEKANIKS.mp3"     preload="auto"></audio>
+<audio id="panutoAudio"      src="PANUTO.mp3"        preload="auto"></audio>
+<audio id="level2IntroAudio" src="LVL 2 INTRO.mp3"  preload="auto"></audio>
+<audio id="level3IntroAudio" src="LVL 3 INTRO.mp3"  preload="auto"></audio>
+<audio id="outroAudio"       src="OUTRO.mp3"         preload="auto"></audio>
+<div class="toast" id="toast"></div>
+
+<script>
+  let qaData = [
+    { q: "magandang umaga",           answer: "Magandang umaga sa inyo mga mahal kong mag-aaral.",                                                                                                   video: "mantalking.mp4", voice: "magandang-umaga.mp3" },
+    { q: "magandang hapon",           answer: "Magandang hapon sa inyo mga mahal kong mag-aaral.",                                                                                                   video: "mantalking.mp4", voice: "magandang-hapon.mp3" },
+    { q: "kumusta",                   answer: "Magandang buhay, ano ang maipaglilingkod ko sainyo aking mga mag-aaral.",                                                                             video: "mantalking.mp4", voice: "kumusta.mp3"          },
+    { q: "magandang gabi",            answer: "Magandang gabi rin sa inyo! Kumusta ang inyong araw?",                                                                                               video: "mantalking.mp4", voice: "magandang-gabi.mp3"       },
+    { q: "salamat",                   answer: "Walang anuman! Lagi akong handang tumulong sa inyo.",                                                                                                video: "mantalking.mp4", voice: "salamat.mp3"       },
+    { q: "paalam",                    answer: "Paalam! Ingat kayo at magkita-kita tayo ulit sa susunod na pagkakataon.",                                                                            video: "mantalking.mp4", voice: "paalam.mp3"       },
+    { q: "sino ang may akda",         answer: "Ang may akda ng Florante at Laura ay si Francisco Balagtas, na kilala rin sa tawag na Francisco Baltazar.",                                         video: "mantalking.mp4", voice: "mantalking.mp4"       },
+    { q: "sino ang autor",            answer: "Ang autor ng Florante at Laura ay si Francisco Balagtas, ang Prinsipe ng Makatang Tagalog.",                                                        video: "mantalking.mp4", voice: "mantalking.mp4"       },
+    { q: "sino ang sumulat",          answer: "Si Francisco Balagtas ang sumulat ng Florante at Laura noong ika-19 na siglo.",                                                                     video: "mantalking.mp4", voice: "mantalking.mp4"       },
+    { q: "sino si florante",          answer: "Si Florante ay ang pangunahing tauhan ng kuwento. Siya ay isang prinsipe ng Albanya na nahulog sa pagmamahal kay Laura.",                           video: "mantalking.mp4", voice: "mantalking.mp4"       },
+    { q: "sino si laura",             answer: "Si Laura ay ang pangunahing babae sa kuwento. Siya ang minamahal ni Florante at anak ng Duke Briseo.",                                              video: "mantalking.mp4", voice: "mantalking.mp4"       },
+    { q: "sino si adolfo",            answer: "Si Konde Adolfo ang kontrabida sa kwento. Siya ang nagpatali kay Florante sa puno upang siya ay mamatay.",                                         video: "mantalking.mp4", voice: "mantalking.mp4"       },
+    { q: "sino si aladin",            answer: "Si Aladin ay isang Morong prinsipe mula sa Persiya. Siya ang nagligtas kay Florante at naging magkaibigan nila.",                                   video: "mantalking.mp4", voice: "mantalking.mp4"       },
+    { q: "sino si flerida",           answer: "Si Flerida ay ang minamahal ni Aladin. Siya ay isang Morang prinsesa na tumakas upang sumama kay Aladin.",                                         video: "mantalking.mp4", voice: "mantalking.mp4"       },
+    { q: "sino si menandro",          answer: "Si Menandro ay ang matalik na kaibigan ni Florante noong sila ay nag-aaral sa Atenas.",                                                             video: "mantalking.mp4", voice: "mantalking.mp4"       },
+    { q: "ano ang florante at laura", answer: "Ang Florante at Laura ay isang mahabang tulang pampanitikan na kilala bilang awit o korido. Isinulat ito ni Francisco Balagtas.",                   video: "mantalking.mp4", voice: "mantalking.mp4"       },
+    { q: "ano ang tema",              answer: "Ang pangunahing tema ng Florante at Laura ay ang pag-ibig, katapatan, kabayanihan, at ang pakikipaglaban sa kasamaan at pagtataksil.",               video: "mantalking.mp4", voice: "mantalking.mp4"       },
+    { q: "saan naganap",              answer: "Ang kwento ay naganap sa kathang-isip na kaharian ng Albanya at Persiya.",                                                                           video: "mantalking.mp4", voice: "mantalking.mp4"       },
+    { q: "ano ang uri ng akda",       answer: "Ang Florante at Laura ay isang awit — isang uri ng mahabang tulang Tagalog na may sukat na 12 pantig at tugmang AABB.",                             video: "mantalking.mp4", voice: "mantalking.mp4"       },
+    { q: "kailan isinulat",           answer: "Isinulat ni Balagtas ang Florante at Laura noong mga 1838 habang siya ay nakakulong sa Bataan.",                                                    video: "mantalking.mp4", voice: "mantalking.mp4"       },
+    { q: "ano ang banghay",           answer: "Ang banghay ay nagsisimula sa pagkakataon na si Florante ay nakatali sa puno sa gubat at iniligtas ni Aladin. Doon inilahad ang kanilang mga nakaraan.", video: "mantalking.mp4", voice: "mantalking.mp4" },
+    { q: "sino si balagtas",          answer: "Si Francisco Balagtas, na may buong pangalang Francisco Baltazar, ay ipinanganak noong 1788 sa Bigaa, Bulacan. Siya ang pinakakilalang makata ng Pilipinas sa panahon ng Espanyol.", video: "mantalking.mp4", voice: "mantalking.mp4" },
+    { q: "florante at laura",         answer: "Sige! Ipapakita ko na ang video ng Florante at Laura.", type: "fullvideo", videoFile: "Florante at Laura.mp4" }
+  ];
+
+  const chatBox=document.getElementById("chatBox"),historyBox=document.getElementById("historyBox"),userInput=document.getElementById("userInput"),speakerVid=document.getElementById("speakerVideo"),hiddenVoice=document.getElementById("hiddenVoice"),introAudio=document.getElementById("introAudio"),mechanicsAudio=document.getElementById("mechanicsAudio"),panutoAudio=document.getElementById("panutoAudio"),level2IntroAudio=document.getElementById("level2IntroAudio"),level3IntroAudio=document.getElementById("level3IntroAudio"),outroAudio=document.getElementById("outroAudio"),quizQuestionAudio=document.getElementById("quizQuestionAudio"),quizFeedbackAudio=document.getElementById("quizFeedbackAudio"),videoBox=document.getElementById("videoBox"),quickBtns=document.getElementById("quickBtns"),idleDisplay=document.getElementById("idleDisplay"),waveDisplay=document.getElementById("waveDisplay"),adminModal=document.getElementById("adminModal"),toastEl=document.getElementById("toast");
+
+  function openAdmin(){renderQAList();adminModal.classList.add("open");}
+  function closeAdmin(){adminModal.classList.remove("open");}
+  adminModal.addEventListener("click",e=>{if(e.target===adminModal)closeAdmin();});
+
+  const quizModal=document.getElementById("quizModal"),quizIntro=document.getElementById("quizIntro"),quizPanutoScreen=document.getElementById("quizPanutoScreen"),quizMechanics=document.getElementById("quizMechanics"),quizContent=document.getElementById("quizContent"),quizOutro=document.getElementById("quizOutroScreen"),quizComplete=document.getElementById("quizComplete"),quizTitle=document.getElementById("quizTitle"),quizQuestion=document.getElementById("quizQuestion"),quizAnswers=document.getElementById("quizAnswers"),quizTimer=document.getElementById("quizTimer"),quizScore=document.getElementById("quizScore"),quizProgress=document.getElementById("quizProgress"),quizFeedback=document.getElementById("quizFeedback"),quizLevel2Intro=document.getElementById("quizLevel2Intro"),quizLevel3Intro=document.getElementById("quizLevel3Intro");
+
+  let quizData=[
+    {question:"LEVEL 1 - Saan dinala ni Konde Adolfo si Florante na kung saan may malalaking kahoy, may maririnig na huni ng ibon at mababangis na leon ang makikita?",answers:["A. Krotona","B. Atenas","C. Gubat","D. Albanya"],correct:2,audio:"NUM 1.mp3",correctAudio:"NUM 1 TAMA.mp3"},
+    {question:"LEVEL 1 - Ang paaralang humubog sa kahusayan ni Florante, at dito niya nakilala ang kaniyang matalik na kaibigang si Menandro. Ano ang tawag sa paaralang ito?",answers:["A. Atenas","B. Krotona","C. Albanya","D. Gubat"],correct:0,audio:"NUM2.mp3",correctAudio:"NUM 2 TAMA.mp3"},
+    {question:"LEVEL 1 - Hindi sa Albanya, bagkus sa anong kaharian nais mamuhay ni Florante?",answers:["A. Kaharian ng Persiya","B. Kaharian ng Krotona","C. Kaharian ng Albanya","D. Sa gubat"],correct:1,audio:"NUM 3.mp3",correctAudio:"NUM 3 TAMA.mp3"},
+    {question:"LEVEL 1 - Binubuo ng mga mahuhusay sa pakikipaglaban, dito ang kahariang pinanggalingan ng magkasintahang Aladdin at Flerida. Saang kaharian ito?",answers:["A. Kaharian ng Persiya","B. Kaharian ng Krotona","C. Kaharian ng Albanya","D. Sa gubat"],correct:0,audio:"NUM 4.mp3",correctAudio:"NUM 4 TAMA.mp3"},
+    {question:"LEVEL 1 - Nakatatakot na puno, tila walang bunga, tanging lungkot at hinagpis ang namumutawi sa punong ito.",answers:["A. Puno ng Nara","B. Puno ng Acacia","C. Puno ng Higera","D. Puno ng Saging"],correct:2,audio:"NUM 5.mp3",correctAudio:"NUM 5 TAMA.mp3"},
+    {question:"LEVEL 2 - Ay Laurang poo'y bakit isinuyo sa iba ang sintang sa aki'y pangako at pinaglilihan ang tapat na puso pinanggugulan mo ng luhang tumulo?",answers:["Florante","Laura","Konde Adolfo","Aladin"],correct:0,audio:"LVL 2 NUMB 1.mp3",correctAudio:"LVL 2 NUM 2 TAMA.mp3"},
+    {question:"LEVEL 2 - 'O pagsintang labis ng kapangyarihan sampung mag-aama'y iyong nasasaklaw; 'pag ikaw ang nasok sa puso ninuman, hahamaking lahat masunod ka lamang!'",answers:["Florante","Aladin","Flerida","Konde Adolfo"],correct:1,audio:"LVL 2 NUM 3.mp3",correctAudio:"LVL 2 NUM 3 TAMA.mp3"},
+    {question:"LEVEL 2 - 'Tanang balahibo'y pinapangalisag nanindig ang buntot na nakagugulat, sa bangis ng anyo at nginasab-ngasab, puryang nagngangalit ang siyang katulad.",answers:["Leon","Aladin","Florante","Laura"],correct:0,audio:"LVL 2 NUM 4.mp3",correctAudio:"LVL 2 NUM 4 TAMA.mp3"},
+    {question:"LEVEL 2 - 'O Haring Linceo, kung 'di mo pinilit na sa salitaan nati'y makipanig, ang buhay ko disi'y hindi nagkasakit ngayong pagliluhan ng anak mong ibig!'",answers:["Laura","Adolfo","Florante","Menandro"],correct:0,audio:"LVL 2 NUM 5.mp3",correctAudio:"LVL 2 NUM 5 TAMA.mp3"},
+    {question:"LEVEL 2 - 'Kaya nga at ako ang naging hantungan, tungo ng salita ng tao sa bayan; mulang bata't hanggang katanda-tandaan ay nakatalastas ng aking pangalan.",answers:["Aladin","Konde Adolfo","Menandro","Florante"],correct:1,audio:"LVL 2 NUM 6.mp3",correctAudio:"LVL 2 NUM 6 TAMA.mp3"},
+    {question:"LEVEL 3 - Ay saan ngayon ako mangangapit? saan ipupukol ang tinangis-tangis kung ayaw na ngayong dinggin ng langit, ang sigaw ng aking <u>MALUMBAY</u> na boses!",html:true,answers:["Malungkot","Masaya","Matapang","Galit"],correct:0,audio:"LVL 3 NUM 1.mp3",correctAudio:"LVL 3 NUM 1 TAMA.mp3"},
+    {question:"LEVEL 3 - Bagong-taon basal ang anyo at tindig, kahit nakatali kamay,paa't leeg, kung 'di si Narciso'y tunay na <u>ADONIS</u> mukha'y sumisilang sa gitna ng sakit.",html:true,answers:["Makisig","Malakas","Mahinhin","Matamlay"],correct:0,audio:"LVL 3 NUM 2.mp3",correctAudio:"LVL 3 NUM 2 TAMA.mp3"},
+    {question:"LEVEL 3 - Sandaling tumigil itong nananangis, Binigyang panahong luhang <u>TUMAGISTIS</u> Niyong naaawang morong nakikinig, Sa habag ay halos magputok ang dibdib.",html:true,answers:["Umagos","Tumulo","Nagdaloy","Nagpatuloy"],correct:0,audio:"NUM 13.mp3",correctAudio:"NUM 13 TAMA.mp3"},
+    {question:"LEVEL 3 - Isang <u>BINIBINI</u> ang gapos na tahlay; na sa ramdam nami'y tangkang pupugutan, ang puso ko'y lalong naipit ng lumbay sa gunitang baka si Laura kong buhay.",html:true,answers:["Babaeng walang asawa","Bayani","Reyna","Kapatid"],correct:0,audio:"NUM 14.mp3",correctAudio:"NUM 14 TAMA.mp3"},
+    {question:"LEVEL 3 - Kapagdating dito ako'y dinadahas at ibig <u>ILUGSO KONG PURI</u> kong ingat; mana'y isang tunod na kung saan buhat, pumako sa dibdib ni Adolfong sukab.",html:true,answers:["Wasakin","Itaboy","Iwasan","Itago"],correct:0,audio:"NUM 15.mp3",correctAudio:"NUM 15 TAMA.mp3"}
+  ];
+
+  let quizIndex=0,quizScoreValue=0,quizTime=10,quizTimerId=null;
+
+  function pauseAllAudio(){[introAudio,mechanicsAudio,panutoAudio,quizQuestionAudio,level2IntroAudio,level3IntroAudio,outroAudio].forEach(a=>{a.pause();a.currentTime=0;});quizFeedbackAudio.pause();quizFeedbackAudio.currentTime=0;}
+  function hideAllPanels(){[quizIntro,quizPanutoScreen,quizMechanics,quizContent,quizLevel2Intro,quizLevel3Intro,quizOutro,quizComplete].forEach(el=>el.style.display="none");quizFeedback.innerText="";}
+  function openQuiz(){quizModal.classList.add("open");showQuizIntro();}
+  function closeQuiz(){quizModal.classList.remove("open");clearInterval(quizTimerId);pauseAllAudio();}
+  function showQuizIntro(){clearInterval(quizTimerId);pauseAllAudio();hideAllPanels();quizIndex=0;quizScoreValue=0;quizTitle.innerText="Introduksyon";quizIntro.style.display="block";quizProgress.innerText=`1 / ${quizData.length}`;quizScore.innerText="Score: 0";introAudio.play().catch(()=>{});}
+  function showQuizPanuto(){pauseAllAudio();hideAllPanels();quizTitle.innerText="Panuto";quizPanutoScreen.style.display="block";panutoAudio.play().catch(()=>{});}
+  function showQuizMechanics(){pauseAllAudio();hideAllPanels();quizTitle.innerText="Mekaniks";quizMechanics.style.display="block";mechanicsAudio.play().catch(()=>{});}
+  function showQuizLevel2Intro(){clearInterval(quizTimerId);pauseAllAudio();hideAllPanels();quizTitle.innerText="Level 2";quizLevel2Intro.style.display="block";quizProgress.innerText=`${quizIndex+1} / ${quizData.length}`;level2IntroAudio.play().catch(()=>{});}
+  function beginLevel2Questions(){level2IntroAudio.pause();level2IntroAudio.currentTime=0;renderQuizQuestion();}
+  function showQuizLevel3Intro(){clearInterval(quizTimerId);pauseAllAudio();hideAllPanels();quizTitle.innerText="Level 3";quizLevel3Intro.style.display="block";quizProgress.innerText=`${quizIndex+1} / ${quizData.length}`;level3IntroAudio.play().catch(()=>{});}
+  function beginLevel3Questions(){level3IntroAudio.pause();level3IntroAudio.currentTime=0;renderQuizQuestion();}
+  function startQuiz(){pauseAllAudio();quizIndex=0;quizScoreValue=0;hideAllPanels();quizTitle.innerText="Quiz";quizContent.style.display="block";renderQuizQuestion();}
+
+  function startQuizTimer(current){
+    clearInterval(quizTimerId);quizTime=5;quizTimer.innerText=5;
+    quizTimerId=setInterval(()=>{
+      quizTime-=1;
+      if(quizTime<=0){quizTime=0;quizTimer.innerText=0;clearInterval(quizTimerId);quizFeedback.innerText="Oras ay lumipas!";quizAnswers.querySelectorAll("button").forEach((btn,i)=>{if(i===current.correct)btn.classList.add("correct");btn.disabled=true;});if(current.correctAudio){quizFeedbackAudio.src=current.correctAudio;quizFeedbackAudio.load();quizFeedbackAudio.onended=()=>{document.getElementById("quizFooter").style.display="block";};quizFeedbackAudio.play().catch(()=>{document.getElementById("quizFooter").style.display="block";});}else{document.getElementById("quizFooter").style.display="block";}return;}
+      quizTimer.innerText=quizTime;
+    },1000);
+  }
+
+  function renderQuizQuestion(){
+    if(quizIndex>=quizData.length){finishQuiz();return;}
+    hideAllPanels();quizContent.style.display="block";
+    const current=quizData[quizIndex];
+    const rawText=current.question.replace(/^LEVEL \d+ -\s*/i,"");
+    if(current.html)quizQuestion.innerHTML=rawText;else quizQuestion.innerText=rawText;
+    quizAnswers.innerHTML="";quizProgress.innerText=`${quizIndex+1} / ${quizData.length}`;quizScore.innerText=`Score: ${quizScoreValue}`;quizTime=5;quizTimer.innerText=5;quizFeedback.innerText="";
+    quizQuestionAudio.pause();quizQuestionAudio.currentTime=0;quizQuestionAudio.onended=null;
+    quizFeedbackAudio.pause();quizFeedbackAudio.currentTime=0;quizFeedbackAudio.onended=null;
+    document.getElementById("quizFooter").style.display="none";
+    if(current.audio){quizQuestionAudio.src=current.audio;quizQuestionAudio.style.display="block";quizQuestionAudio.load();quizQuestionAudio.onended=()=>startQuizTimer(current);quizQuestionAudio.play().catch(()=>startQuizTimer(current));}
+    else{quizQuestionAudio.style.display="none";quizQuestionAudio.removeAttribute("src");startQuizTimer(current);}
+    current.answers.forEach((answer,index)=>{const btn=document.createElement("button");btn.className="quiz-answer";btn.innerText=answer;btn.onclick=()=>selectQuizAnswer(index);quizAnswers.appendChild(btn);});
+  }
+
+  function proceedToNextQuestion(){quizFeedbackAudio.onended=null;document.getElementById("quizFooter").style.display="none";quizIndex+=1;if(quizIndex===5){showQuizLevel2Intro();return;}if(quizIndex===10){showQuizLevel3Intro();return;}if(quizIndex>=quizData.length){showQuizOutro();return;}renderQuizQuestion();}
+
+  function selectQuizAnswer(choice){
+    clearInterval(quizTimerId);quizQuestionAudio.pause();quizFeedbackAudio.pause();quizFeedbackAudio.currentTime=0;quizFeedbackAudio.onended=null;
+    const current=quizData[quizIndex];const correctChoice=current.correct;
+    quizAnswers.querySelectorAll("button").forEach((btn,i)=>{btn.disabled=true;if(i===correctChoice)btn.classList.add("correct");if(i===choice&&i!==correctChoice)btn.classList.add("wrong");});
+    if(choice===correctChoice){quizScoreValue+=1;quizFeedback.innerText="Tama!";}else{quizFeedback.innerText="Mali. Tama ang sagot sa highlighted.";}
+    if(current.correctAudio){quizFeedbackAudio.src=current.correctAudio;quizFeedbackAudio.load();quizFeedbackAudio.play().catch(()=>{});}
+    quizScore.innerText=`Score: ${quizScoreValue}`;document.getElementById("quizFooter").style.display="block";
+  }
+
+  function showQuizOutro(){clearInterval(quizTimerId);pauseAllAudio();hideAllPanels();quizTitle.innerText="Outro";quizOutro.style.display="block";outroAudio.play().catch(()=>{});}
+  function showComplete(){pauseAllAudio();hideAllPanels();quizTitle.innerText="Resulta";quizComplete.style.display="block";document.getElementById("quizResult").innerText=`Natapos mo ang quiz! Score: ${quizScoreValue} mula sa ${quizData.length}.`;}
+  function finishQuiz(){clearInterval(quizTimerId);showQuizOutro();}
+  quizModal.addEventListener("click",e=>{if(e.target===quizModal)closeQuiz();});
+
+  function playFloranteVideo(filename){
+    document.querySelectorAll(".chat-video-wrap").forEach(el=>el.remove());
+    const wrap=document.createElement("div");wrap.className="chat-video-wrap";
+    wrap.innerHTML=`<video controls autoplay playsinline src="${filename}"></video>`;
+    const allMsgs=chatBox.querySelectorAll(".msg.ai");const lastAI=allMsgs[allMsgs.length-1];
+    if(lastAI){const bubble=lastAI.querySelector(".bubble");if(bubble){bubble.classList.add("has-video");bubble.appendChild(wrap);}else lastAI.appendChild(wrap);}else chatBox.appendChild(wrap);
+    chatBox.scrollTop=chatBox.scrollHeight;
+  }
+  function stopFloranteVideo(){document.querySelectorAll(".chat-video-wrap").forEach(el=>el.remove());}
+
+  function renderQAList(){
+    const list=document.getElementById("qaList");const count=document.getElementById("qaCount");
+    count.textContent=qaData.length;list.innerHTML="";
+    if(qaData.length===0){list.innerHTML=`<div class="empty-msg">Walang Q&amp;A pa.</div>`;return;}
+    qaData.forEach((item,i)=>{const d=document.createElement("div");d.className="qa-item";d.innerHTML=`<div class="qa-item-num">#${i+1}</div><div class="qa-item-text"><div class="qa-item-q">❓ ${item.q}</div><div class="qa-item-a">💬 ${item.answer}</div><div class="qa-item-files">🎬 ${item.videoFile||item.video||"—"} &nbsp; 🔊 ${item.voice||"—"}</div></div><button class="delete-btn" onclick="deleteQA(${i})">🗑</button>`;list.appendChild(d);});
+  }
+  function addQA(){const q=document.getElementById("inQ").value.trim();const a=document.getElementById("inA").value.trim();const v=document.getElementById("inV").value.trim();const audio=document.getElementById("inAudio").value.trim();if(!q||!a){showToast("Punan ang Tanong at Sagot!","red");return;}qaData.push({q:q.toLowerCase(),answer:a,video:v||"mantalking.mp4",voice:audio||v||"mantalking.mp4"});["inQ","inA","inV","inAudio"].forEach(id=>document.getElementById(id).value="");rebuildQuickBtns();renderQAList();showToast("Na-save ang bagong Q&A! ✔","green");}
+  function deleteQA(index){qaData.splice(index,1);rebuildQuickBtns();renderQAList();showToast("Na-delete.","red");}
+  function rebuildQuickBtns(){quickBtns.innerHTML="";qaData.forEach(item=>{const btn=document.createElement("button");btn.className="qbtn";btn.textContent=item.q.charAt(0).toUpperCase()+item.q.slice(1);btn.onclick=()=>{userInput.value=item.q;sendMessage();};quickBtns.appendChild(btn);});}
+  rebuildQuickBtns();
+
+  function normalise(t){return t.toLowerCase().trim();}
+  function findAnswer(q){const c=normalise(q);for(const item of qaData){if(c.includes(normalise(item.q)))return item;}return{answer:"Pasensya na po, wala pa akong sagot para sa tanong na iyon. Subukan ang ibang katanungan.",video:null,voice:null};}
+
+  function addMsg(text,who){
+    const d=document.createElement("div");d.className="msg "+who;
+    const b=document.createElement("div");b.className="bubble";b.textContent=text;
+    d.appendChild(b);chatBox.appendChild(d);chatBox.scrollTop=chatBox.scrollHeight;
+    const h=document.createElement("div");h.className="history-item";
+    const label=who==="user"?"Ikaw":"Guro";const preview=text.length>45?text.slice(0,45)+"…":text;
+    h.innerHTML=`<span>${label}</span>${preview}`;historyBox.appendChild(h);historyBox.scrollTop=historyBox.scrollHeight;
+  }
+
+  let typingEl=null;
+  function showTyping(){typingEl=document.createElement("div");typingEl.className="msg ai";typingEl.innerHTML=`<div class="bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;chatBox.appendChild(typingEl);chatBox.scrollTop=chatBox.scrollHeight;}
+  function removeTyping(){if(typingEl){typingEl.remove();typingEl=null;}}
+  function showWave(){idleDisplay.classList.add("hidden");waveDisplay.classList.add("active");videoBox.classList.add("playing");}
+  function showIdle(){waveDisplay.classList.remove("active");idleDisplay.classList.remove("hidden");videoBox.classList.remove("playing");}
+
+  let syncTimer=null;
+  function stopMedia(){if(syncTimer){clearInterval(syncTimer);syncTimer=null;}speakerVid.pause();hiddenVoice.pause();speakerVid.currentTime=0;hiddenVoice.currentTime=0;showIdle();}
+
+  function sendMessage(){
+    const q=userInput.value.trim();if(!q)return;
+    addMsg(q,"user");userInput.value="";showTyping();
+    setTimeout(()=>{removeTyping();const result=findAnswer(q);addMsg(result.answer,"ai");if(result.type==="fullvideo")playFloranteVideo(result.videoFile);},500);
+  }
+
+  userInput.addEventListener("keydown",e=>{if(e.key==="Enter")sendMessage();});
+
+  let toastTimer=null;
+  function showToast(msg,color){toastEl.textContent=msg;toastEl.className=`toast ${color} show`;if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove("show"),2500);}
+</script>
+</body>
+</html>
